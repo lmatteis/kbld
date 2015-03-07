@@ -103,7 +103,7 @@ public class Main {
     private static long startTime;
     private static int totalTriples = 0;
     private static Semaphore semaphore = new Semaphore(2);
-    private static Semaphore semaphorePredicate = new Semaphore(2);
+    private static Semaphore semaphorePredicate = new Semaphore(1);
     
     
     public static void Navigate(ArrayList<String> S, ArrayList<String> Knew) throws URISyntaxException, IOException, TripleHandlerException, ExtractionException, RDFHandlerException {
@@ -309,7 +309,7 @@ public class Main {
 
         		//return resolveURI(uri);
         	}
-            //System.out.println("ERROR: " + e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
             e.printStackTrace();
         } finally {
             handler.close();
