@@ -99,11 +99,11 @@ class MyTripleHandler implements TripleHandler {
 
 public class Main {
     private static HashMap<String, Model> resolved = new HashMap<String, Model>();
-    private static PrintStream out;
+    private static PrintWriter out;
     private static long startTime;
     private static int totalTriples = 0;
     private static Semaphore semaphore = new Semaphore(2);
-    private static Semaphore semaphorePredicate = new Semaphore(1);
+    private static Semaphore semaphorePredicate = new Semaphore(2);
     
     
     public static void Navigate(ArrayList<String> S, ArrayList<String> Knew) throws URISyntaxException, IOException, TripleHandlerException, ExtractionException, RDFHandlerException {
@@ -132,7 +132,8 @@ public class Main {
             if(F.size() > 0 && K.size() == 0) {
                 Rio.write(F, System.out, RDFFormat.NTRIPLES);
                 long estimatedTime = System.currentTimeMillis() - startTime;
-                out.println("("+estimatedTime / 1000.0 + ",1)");
+                //totalTriples = totalTriples + 1;
+                out.println("("+estimatedTime / 1000.0 + ","+totalTriples+")");
                 out.flush();  
             }
             if(F.size() > 0 && K.size() > 0) {
@@ -309,7 +310,7 @@ public class Main {
 
         		//return resolveURI(uri);
         	}
-            System.out.println("ERROR: " + e.getMessage());
+            //System.out.println("ERROR: " + e.getMessage());
             e.printStackTrace();
         } finally {
             handler.close();
@@ -341,8 +342,7 @@ public class Main {
             try {
 
                 P = resolveURI(t.getPredicate().toString());
-                if(isDbpedia(t.getPredicate().toString()))
-                	semaphorePredicate.release();
+                semaphorePredicate.release();
             } catch (RDFHandlerException | URISyntaxException | IOException
                     | TripleHandlerException e) {
                 // TODO Auto-generated catch block
@@ -353,8 +353,8 @@ public class Main {
             if(FP.size() > 0) {
                 long estimatedTime = System.currentTimeMillis() - startTime;
 //                System.out.println(t);
-                
-                out.println("("+estimatedTime / 1000.0 + ",1) % ["+keyword+"]");
+                totalTriples = totalTriples + 1;
+                out.println("("+estimatedTime / 1000.0 + ","+totalTriples+") ["+keyword+"]");
                 out.flush();
                 
                 ArrayList<String> uris = getURIs(t, uri);  
@@ -380,8 +380,7 @@ public class Main {
             Model R = null;
             try {
                 R = resolveURI(uri);
-                if(isDbpedia(uri))
-                	semaphore.release();
+                semaphore.release();
             } catch (RDFHandlerException | URISyntaxException | IOException
                     | TripleHandlerException e) {
                 // TODO Auto-generated catch block
@@ -398,8 +397,8 @@ public class Main {
 //                    e.printStackTrace();
 //                }
                 long estimatedTime = System.currentTimeMillis() - startTime;
-                totalTriples = F.size();
-                out.println("("+estimatedTime / 1000.0 + "," + totalTriples + ") % ["+keyword+"]");
+                totalTriples = totalTriples + F.size();
+                out.println("("+estimatedTime / 1000.0 + "," + totalTriples + ") ["+keyword+"]");
                 out.flush();
                 
                 ArrayList<String> uris = getURIs(F, uri);
@@ -411,14 +410,13 @@ public class Main {
             remove(R, F); // this removes F statements from R: R-F
             T.addAll(R);
             for(Statement t: T) {
-                try {
-                	if(isDbpedia(t.getPredicate().toString()))
-                		semaphorePredicate.acquire();
+                	try {
+						semaphorePredicate.acquire();
+					} catch (InterruptedException e) {
+						// TODO Auto-generated catch block
+						e.printStackTrace();
+					}
 
-				} catch (InterruptedException | MalformedURLException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
 
                 new ThreadResolvePredicate(uri, keyword, t, pipeElement).start();
                 
@@ -449,9 +447,8 @@ public class Main {
         // this is called when we retrieve a uri
         private void send(String uri) {
         	try {
-        		if(isDbpedia(uri))
-        			semaphore.acquire();
-			} catch (InterruptedException | MalformedURLException e) {
+        		semaphore.acquire();
+			} catch (InterruptedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
@@ -473,8 +470,8 @@ public class Main {
         
         //ArrayList<String> output = new ArrayList<String>(Arrays.asList("http://harth.org/andreas/foaf#ah"));
         //ArrayList<String> K = new ArrayList<String>(Arrays.asList("known"/*, "interest"*/));
-        //out = new PrintWriter(new BufferedWriter(new FileWriter("stream.txt", true)));
-        out = System.out;
+        out = new PrintWriter(new BufferedWriter(new FileWriter("stream.txt", true)));
+        //out = System.out;
         startTime = System.currentTimeMillis();
         
         // notify System.out when we .write
@@ -485,7 +482,8 @@ public class Main {
         		output = new PipeElement(output);
         		output.write(args[counter]);
         	} else {
-        		output = new PipeElement(output, args[counter]);
+        		String keyword = args[counter];
+        		output = new PipeElement(output, keyword);
         	}
         	
         }
