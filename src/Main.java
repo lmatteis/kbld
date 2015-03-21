@@ -102,7 +102,7 @@ public class Main {
     private static PrintWriter out;
     private static long startTime;
     private static int totalTriples = 0;
-    private static Semaphore semaphore = new Semaphore(2);
+    private static Semaphore semaphore = new Semaphore(3);
     private static Semaphore semaphorePredicate = new Semaphore(2);
     
     
@@ -310,7 +310,7 @@ public class Main {
 
         		//return resolveURI(uri);
         	}
-            //System.out.println("ERROR: " + e.getMessage());
+            System.out.println("ERROR: " + e.getMessage());
             e.printStackTrace();
         } finally {
             handler.close();
@@ -352,7 +352,7 @@ public class Main {
             Model FP = filter(keyword, P, true); // should filter only literals
             if(FP.size() > 0) {
                 long estimatedTime = System.currentTimeMillis() - startTime;
-//                System.out.println(t);
+                System.out.println(t);
                 totalTriples = totalTriples + 1;
                 out.println("("+estimatedTime / 1000.0 + ","+totalTriples+") ["+keyword+"]");
                 out.flush();
@@ -388,14 +388,15 @@ public class Main {
             }
 
             Model F = filter(keyword, R);
+            //System.out.println(uri + F.size() + keyword);
 
             if(F.size() > 0) {
-//                try {
-//                    Rio.write(F, System.out, RDFFormat.NTRIPLES);
-//                } catch (RDFHandlerException e) {
-//                    // TODO Auto-generated catch block
-//                    e.printStackTrace();
-//                }
+                try {
+                    Rio.write(F, System.out, RDFFormat.NTRIPLES);
+                } catch (RDFHandlerException e) {
+                    // TODO Auto-generated catch block
+                    e.printStackTrace();
+                }
                 long estimatedTime = System.currentTimeMillis() - startTime;
                 totalTriples = totalTriples + F.size();
                 out.println("("+estimatedTime / 1000.0 + "," + totalTriples + ") ["+keyword+"]");
@@ -454,6 +455,7 @@ public class Main {
 			}
 
             new ThreadGotLine(uri, keyword, this).start();
+
         }
     }
     
@@ -548,11 +550,11 @@ public class Main {
         for(Statement st: model) {
             Resource subj = st.getSubject();
             Value obj = st.getObject();
-            if(subj instanceof URI && !uri.contains(subj.toString())) {
+            if(subj instanceof URI && !uri.equals(subj.toString())) {
                 if(!ret.contains(subj.toString()))
                     ret.add(subj.toString());
             }
-            if(obj instanceof URI && !uri.contains(obj.toString())) {
+            if(obj instanceof URI && !uri.equals(obj.toString())) {
                 if(!ret.contains(obj.toString()))
                     ret.add(obj.toString());
             }
@@ -564,11 +566,11 @@ public class Main {
         
         Resource subj = st.getSubject();
         Value obj = st.getObject();
-        if(subj instanceof URI && !uri.contains(subj.toString())) {
+        if(subj instanceof URI && !uri.equals(subj.toString())) {
             if(!ret.contains(subj.toString()))
                 ret.add(subj.toString());
         }
-        if(obj instanceof URI && !uri.contains(obj.toString())) {
+        if(obj instanceof URI && !uri.equals(obj.toString())) {
             if(!ret.contains(obj.toString()))
                 ret.add(obj.toString());
         }
