@@ -1,0 +1,1 @@
+Implementation of keyword-based navigation (using a streaming pipeline implemented with an observable pattern) and search (using predicate resolution) over the linked data web.
